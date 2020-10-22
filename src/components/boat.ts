@@ -157,6 +157,7 @@ export default class Boat extends PIXI.Container {
 
     kill(animated = true) {
         if (!this.alive) return;
+        this.alive = false;
         if (animated) {
             const ease = new Ease({ease: "easeOutSine", duration: 150});
             ease.add(this, {alpha: .6},{});
@@ -172,9 +173,8 @@ export default class Boat extends PIXI.Container {
         this.oarEase.destroy();
     }
 
-
     updateLocation(x: number, y: number, rot: number) {
-        const delay = Config.serverUpdateRate;
+        const delay = Config.animationBlurTime;
         if (this.moveTicker.started) this.moveTicker.update();
         this.goalX = x;
         this.goalY = y;

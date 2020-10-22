@@ -1,0 +1,22 @@
+[
+    {
+        "endpoint": "http://10.249.70.103:5000",
+        "name": "Queens' NM1",
+        "club": "queens"
+    },
+    {
+        "endpoint": "http://10.249.74.17:5000",
+        "name": "Maggie NM1",
+        "club": "maggie"
+    },
+    {
+        "endpoint": "http://10.249.70.103:4000",
+        "name": "Magdalene NM1",
+        "club": "magdalene"
+    },
+    {
+        "endpoint": "http://10.249.67.5:5000",
+        "name": "Pembroke NM1",
+        "club": "pembroke"
+    }
+]

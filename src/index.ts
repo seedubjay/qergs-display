@@ -17,6 +17,11 @@ PIXI.Loader.shared
     .add('oar', 'assets/oar.svg')
     .load(onResourcesLoaded);
 
+function getSplitString(split: number) {
+    let s = Math.round(split*10);
+    return `${Math.floor(s/600)}:${Math.floor(s/10)%60}.${s%10}`
+}
+
 function onResourcesLoaded() {
     const app = new Game(
         window.innerWidth,
@@ -57,13 +62,16 @@ function onResourcesLoaded() {
 
     document.body.appendChild(footer);
 
-
     setInterval(_ => {
         fetch("http://localhost:5000").then(resp => {
             resp.json().then(data => {
                 app.update(data);
                 columns.forEach(c => c.innerHTML = '');
-                data.forEach((d: any) => columns[d['lane']].innerHTML = `<div class="team-name">${d['name']}</div><div class="distance">${Math.round(d['position'])}m</div><div class="split">${d['split']}</div>`)
+                data.forEach((d: any) => columns[d['lane']].innerHTML = `
+                    <div class="team-name">${d['name']}</div>
+                    <div class="distance">${Math.round(d['position'])}m</div>` +
+                    (d['alive'] ? `<div class="split">${getSplitString(d['split'])}</div>` : `<div class="error">erg n/a</div>`)
+                )
             });
         }).catch(reason => {
             console.log(`fetch failed: ${reason}`)

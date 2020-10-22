@@ -13,7 +13,7 @@ export default class Game {
 
     private viewport: Viewport;
     private boats: Map<string,Boat> = new Map();
-    private strokeHandlers: Record<string, (duration: number, accuracy: number, active: boolean) => void> = {};
+    private strokeHandlers: Map<string, (duration: number, accuracy: number, active: boolean) => void> = new Map();
 
     private pixelsPerMeter: number;
 
@@ -84,25 +84,31 @@ export default class Game {
         // console.log(data.map(d => d['id']));
         keys.forEach(i => {
             if (!data.some(d => d['id'] == i)) {
-                console.log(`delete ${i}`);
                 this.boats.get(i).parent.removeChild(this.boats.get(i));
                 this.boats.delete(i);
             }
         })
         for (let d of data) {
             let i = d['id']
+
+            if (this.boats.has(i) && d['alive'] && !this.boats.get(i).alive) {
+                this.boats.get(i).parent.removeChild(this.boats.get(i));
+                this.boats.delete(i);
+                this.strokeHandlers.get(i)(2,1,false);
+                this.strokeHandlers.delete(i);
+            }
+
             if (!this.boats.has(i)) {
                 let b = new Boat((d["lane"]+.5) * config.laneWidth + config.laneBuffer, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, -Math.PI/2,true,d["club"]);
                 this.boats.set(i, b);
                 this.viewport.addChild(b);
-                this.strokeHandlers[i] = getPassiveStrokeModel(b.takeStroke.bind(b));
-                this.strokeHandlers[i](d['rate'], .8, true);
+                this.strokeHandlers.set(i, getPassiveStrokeModel(b.takeStroke.bind(b)));
             } else {
                 let b = this.boats.get(i);
-                let s = this.strokeHandlers[i];
-                b.updateLocation(b.x, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, b.rotation);
-                s(d['rate'], .8, true);
+                b.updateLocation((d["lane"]+.5) * config.laneWidth + config.laneBuffer, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, b.rotation);
             }
+            this.strokeHandlers.get(i)(d['rate'], .8, true);
+            if (!d['alive']) this.boats.get(i).kill(true);
         }
     }
 

@@ -1,6 +1,7 @@
 interface IConfig {
     boatLength: number;
     serverUpdateRate: number;
+    animationBlurTime: number
 
     laneWidth: number;
     laneBuffer: number;
@@ -14,7 +15,8 @@ interface IConfig {
 
 class Config implements IConfig {
     boatLength = 100;
-    serverUpdateRate = .2;
+    serverUpdateRate = .5;
+    animationBlurTime = .5;
 
     headerHeight = 50;
     footerHeight = 80;
