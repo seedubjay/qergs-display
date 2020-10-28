@@ -12,11 +12,13 @@ export default class Game {
     private app: PIXI.Application;
 
     private viewport: Viewport;
+    
+    private background: PIXI.DisplayObject = null;
+
     private boats: Map<string,Boat> = new Map();
     private strokeHandlers: Map<string, (duration: number, accuracy: number, active: boolean) => void> = new Map();
 
     private pixelsPerMeter: number;
-
 
     constructor(width: number, height:number) {
         this.app = new PIXI.Application({
@@ -36,6 +38,18 @@ export default class Game {
         this.app.stage.addChild(this.viewport);
 
         this.pixelsPerMeter = this.viewport.cameraHeight / config.raceLegLength / config.raceLegScreenRatio;
+        this.render_backgound();
+
+        PIXI.Ticker.shared.add(this.update_camera.bind(this));
+    }
+
+    get view() {return this.app.view;}
+
+    render_backgound() {
+        if (this.background) {
+            this.background.parent.removeChild(this.background);
+            this.background = null;
+        }
 
         let map = new PIXI.Graphics();
 
@@ -54,18 +68,16 @@ export default class Game {
                .moveTo(config.laneBuffer * .5, - l * config.raceLegLength * this.pixelsPerMeter)
                .lineTo(config.laneBuffer * 1.5 + config.laneCount*config.laneWidth, - l * config.raceLegLength * this.pixelsPerMeter);
             
-            let text = new PIXI.Text(`${l * config.raceLegLength}m`, { fontSize: 16, fill: '#fff'});
-            text.position.set(config.laneBuffer * .5, - (20 + l * config.raceLegLength * this.pixelsPerMeter))
+            let text = new PIXI.Text(`${l * config.raceLegLength}m`, { fontSize: 48, fill: '#fff'});
+            text.position.set(config.laneBuffer * .5, - (48 + l * config.raceLegLength * this.pixelsPerMeter))
 
             map.addChild(text)
         }
 
         this.viewport.addChild(map);
 
-        PIXI.Ticker.shared.add(this.update_camera.bind(this));
+        this.background = map;
     }
-
-    get view() {return this.app.view;}
 
     update_camera() {
         let min_y = config.boatLength * .6 - this.viewport.cameraHeight / 2;
@@ -76,6 +88,9 @@ export default class Game {
     resize(width:number, height:number) {
         this.app.renderer.resize(width,height);
         this.viewport.resize(width,height);
+        this.pixelsPerMeter = this.viewport.cameraHeight / config.raceLegLength / config.raceLegScreenRatio;
+        this.render_backgound()
+        this.viewport.cameraWidth = config.laneCount * config.laneWidth + 2 * config.laneBuffer;
     }
 
     update(data: [any]) {
@@ -88,27 +103,29 @@ export default class Game {
                 this.boats.delete(i);
             }
         })
-        for (let d of data) {
-            let i = d['id']
+        for (let i = 0; i < data.length; i++) {
+            let d = data[i];
+            let id = d['id']
 
-            if (this.boats.has(i) && d['alive'] && !this.boats.get(i).alive) {
-                this.boats.get(i).parent.removeChild(this.boats.get(i));
-                this.boats.delete(i);
-                this.strokeHandlers.get(i)(2,1,false);
-                this.strokeHandlers.delete(i);
+            if (this.boats.has(id) && d['alive'] && !this.boats.get(id).alive) {
+                this.boats.get(id).parent.removeChild(this.boats.get(id));
+                this.boats.delete(id);
+                this.strokeHandlers.get(id)(2,1,false);
+                this.strokeHandlers.delete(id);
             }
-
-            if (!this.boats.has(i)) {
-                let b = new Boat((d["lane"]+.5) * config.laneWidth + config.laneBuffer, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, -Math.PI/2,true,d["club"]);
-                this.boats.set(i, b);
+            
+            let emptyLanes = Math.floor((config.laneCount - data.length)/2);
+            if (!this.boats.has(id)) {
+                let b = new Boat((i + emptyLanes +.5) * config.laneWidth + config.laneBuffer, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, -Math.PI/2,true,d["club"]);
+                this.boats.set(id, b);
                 this.viewport.addChild(b);
-                this.strokeHandlers.set(i, getPassiveStrokeModel(b.takeStroke.bind(b)));
+                this.strokeHandlers.set(id, getPassiveStrokeModel(b.takeStroke.bind(b)));
             } else {
-                let b = this.boats.get(i);
-                b.updateLocation((d["lane"]+.5) * config.laneWidth + config.laneBuffer, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, b.rotation);
+                let b = this.boats.get(id);
+                b.updateLocation((i + emptyLanes +.5) * config.laneWidth + config.laneBuffer, config.boatLength / 2 - d['position'] * this.pixelsPerMeter, b.rotation);
             }
-            this.strokeHandlers.get(i)(d['rate'], .8, true);
-            if (!d['alive']) this.boats.get(i).kill(true);
+            this.strokeHandlers.get(id)(1.3, .8, d['active']);
+            if (!d['alive']) this.boats.get(id).kill(true);
         }
     }
 

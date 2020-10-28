@@ -14,17 +14,17 @@ interface IConfig {
 }
 
 class Config implements IConfig {
-    boatLength = 100;
-    serverUpdateRate = .5;
-    animationBlurTime = .5;
+    boatLength = 400;
+    serverUpdateRate = 1;
+    animationBlurTime = 1;
 
-    headerHeight = 50;
+    headerHeight = 30;
     footerHeight = 80;
 
-    laneWidth = 110;
-    laneBuffer = 30;
-    laneCount = 8;
-    coneRadius = 3;
+    laneWidth = 480;
+    laneBuffer = 120;
+    laneCount = 5;
+    coneRadius = 12;
     
     coneGapLength = 100;
     raceLegScreenRatio = 1.3;

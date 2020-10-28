@@ -5,9 +5,9 @@ import { getPassiveStrokeModel } from './components/strokemodel';
 import './index.scss'
 import config from './components/config';
 
-const boatData: {tag:string, name:string}[] = require('./assets/boats.json');
+const boatData: {tag:string, name:string}[] = require('../assets/boats.json');
 
-require.context('./assets', true);
+require.context('../assets', true);
 
 boatData.forEach(({tag,name}) => {
     PIXI.Loader.shared.add(tag, `assets/boat-${tag}.svg`);
@@ -16,11 +16,6 @@ boatData.forEach(({tag,name}) => {
 PIXI.Loader.shared
     .add('oar', 'assets/oar.svg')
     .load(onResourcesLoaded);
-
-function getSplitString(split: number) {
-    let s = Math.round(split*10);
-    return `${Math.floor(s/600)}:${Math.floor(s/10)%60}.${s%10}`
-}
 
 function onResourcesLoaded() {
     const app = new Game(
@@ -40,7 +35,7 @@ function onResourcesLoaded() {
 
     window.addEventListener('resize', _ => app.resize(
         window.innerWidth,
-        window.innerHeight
+        window.innerHeight - config.headerHeight - config.footerHeight,
     ));
 
     let footer = document.createElement('div');
@@ -62,20 +57,20 @@ function onResourcesLoaded() {
 
     document.body.appendChild(footer);
 
-    setInterval(_ => {
-        fetch("http://localhost:5000").then(resp => {
-            resp.json().then(data => {
-                app.update(data);
-                columns.forEach(c => c.innerHTML = '');
-                data.forEach((d: any) => columns[d['lane']].innerHTML = `
-                    <div class="team-name">${d['name']}</div>
-                    <div class="distance">${Math.round(d['position'])}m</div>` +
-                    (d['alive'] ? `<div class="split">${getSplitString(d['split'])}</div>` : `<div class="error">erg n/a</div>`)
-                )
-            });
-        }).catch(reason => {
-            console.log(`fetch failed: ${reason}`)
-        });
-    }, config.serverUpdateRate * 1000);
+    let wss = new WebSocket('ws://localhost:5000');
+    wss.onmessage = e => {
+        let data = JSON.parse(e.data as string);
+        app.update(data);
+        columns.forEach(c => c.innerHTML = '');
+        data.forEach((d, i) => columns[i + Math.floor((config.laneCount - data.length) / 2)].innerHTML = `
+            <div class="team-name">${d['name']}</div>
+            <div class="distance">${Math.round(d['position'])}m</div>` +
+            (d['alive'] ? `<div class="split">${d['split']}</div>` : `<div class="error">erg n/a</div>`)
+        )
+    }
 
+    wss.onclose = e => {
+        alert("Lost connection to ergs... Click 'OK' to reload")
+        location.reload();
+    }
 }

@@ -8,7 +8,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 module.exports = (options) => ({
 
     mode: process.env.NODE_ENV || "development",
-    entry: './src/index.ts',
+    entry: './src/client/index.ts',
     optimization: process.env.NODE_ENV === "production" ? {
         minimize: true,
         minimizer: [new TerserPlugin()]
@@ -33,6 +33,7 @@ module.exports = (options) => ({
                     loader: 'ts-loader',
                     options: {
                         transpileOnly: true,
+                        configFile: 'tsconfig-client.json'
                     }
                 }],
                 exclude: /node_modules/
@@ -72,7 +73,7 @@ module.exports = (options) => ({
         new CleanWebpackPlugin(),
         new webpack.HotModuleReplacementPlugin(),
         new HtmlWebpackPlugin({
-            template: path.resolve("src", "index.html")
+            template: path.resolve("src", "client", "index.html")
         }),
     ]
 })
