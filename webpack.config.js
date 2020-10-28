@@ -13,7 +13,7 @@ module.exports = (options) => ({
         minimize: true,
         minimizer: [new TerserPlugin()]
     } : {},
-    devtool: process.env.NODE_ENV === "production" ? '' : 'eval-cheap-module-source-map',
+    devtool: process.env.NODE_ENV === "production" ? false : 'eval-cheap-module-source-map',
     devServer: {
         contentBase: './dist'
     },
