@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsnd --respawn src/server/server.ts",
-    "client": "webpack serve --host 0.0.0.0"
+    "client": "webpack serve --host 0.0.0.0",
+    "build": "webpack --mode production",
+    "start": "ts-node src/server/server.ts"
   },
   "repository": {
     "type": "git",
