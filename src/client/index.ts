@@ -57,7 +57,7 @@ function onResourcesLoaded() {
 
     document.body.appendChild(footer);
 
-    let wss = new WebSocket('ws://localhost:5000');
+    let wss = new WebSocket('ws' + location.href.substr(4));
     wss.onmessage = e => {
         let data = JSON.parse(e.data as string);
         app.update(data);
