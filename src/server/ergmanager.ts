@@ -1,6 +1,8 @@
 import { maxHeaderSize, Server } from 'http';
 import { stringify } from 'querystring';
 import WebSocket from 'ws';
+import cookie from 'cookie';
+import jwt from 'jsonwebtoken';
 
 export default class {
 
@@ -35,6 +37,15 @@ export default class {
                         })
                     });
                 }
+            } else if (s[1] == "admin") {
+                try {
+                    let token = cookie.parse(req.headers.cookie)['jwt'];
+                    jwt.verify(token, process.env.SECRET_TOKEN);
+                } catch (e) {
+                    ws.close();
+                    return;
+                }
+                ws.send("hello");
             } else {
                 setInterval(() => {
                     ws.send(JSON.stringify(this.get_output()));

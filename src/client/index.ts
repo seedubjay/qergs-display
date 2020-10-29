@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import Game from './components/game';
 import Boat from './components/boat';
 import { getPassiveStrokeModel } from './components/strokemodel';
+import './styles.scss'
 import './index.scss'
 import config from './components/config';
 

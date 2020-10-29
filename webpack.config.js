@@ -8,14 +8,17 @@ const TerserPlugin = require('terser-webpack-plugin');
 module.exports = (options) => ({
 
     mode: process.env.NODE_ENV || "development",
-    entry: './src/client/index.ts',
+    entry: {
+        'index': './src/client/index.ts',
+        'admin/admin': './src/client/admin.ts'
+    },
     optimization: process.env.NODE_ENV === "production" ? {
         minimize: true,
         minimizer: [new TerserPlugin()]
     } : {},
     devtool: process.env.NODE_ENV === "production" ? false : 'eval-cheap-module-source-map',
     devServer: {
-        contentBase: './dist'
+        contentBase: './dist',
     },
     resolve: {
         extensions: ['.ts', '.js']
@@ -24,6 +27,7 @@ module.exports = (options) => ({
         filename: '[name].js',
         sourceMapFilename: '[file].map',
         path: path.resolve(__dirname, 'dist'),
+        publicPath: '/',
     },
     module: {
         rules: [
@@ -70,10 +74,16 @@ module.exports = (options) => ({
         ]
     },
     plugins: [
-        new CleanWebpackPlugin(),
         new webpack.HotModuleReplacementPlugin(),
         new HtmlWebpackPlugin({
-            template: path.resolve("src", "client", "index.html")
+            template: path.resolve("src", "client", "index.html"),
+            chunks: ['index']
         }),
+        new HtmlWebpackPlugin({
+            filename: "admin/index.html",
+            template: path.resolve("src", "client", "admin.html"),
+            chunks: ['admin/admin']
+        }),
+        ...(process.env.NODE_ENV === "production" ? [new CleanWebpackPlugin()] : [])
     ]
 })
