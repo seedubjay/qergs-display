@@ -12,7 +12,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 import ErgManager from "./ergmanager";
-import { createImmediatelyInvokedArrowFunction } from "typescript";
 
 const port = Number(process.env.PORT || 5000);
 
@@ -28,6 +27,9 @@ const app = express()
 app.use(cors());
 app.use(express.json())
 app.use(cookieParser());
+
+const server = http.createServer(app);
+let ergs = new ErgManager(server);
 
 STATIC_DIR = path.resolve(__dirname, "..", "..", "dist");
 
@@ -49,10 +51,12 @@ app.use("/admin", (req, res, next) => {
   }
 })
 
+app.post("/admin/devices/:device/delete", (req, res) => {
+  ergs.delete_device(req.params["device"])
+  res.send()
+});
+
 app.use(express.static(STATIC_DIR, {extensions:['html']}))
 
-const server = http.createServer(app);
 server.listen(port)
 console.log(`Listening on port ${ port }`)
-
-let ergs = new ErgManager(server);

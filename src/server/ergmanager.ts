@@ -8,6 +8,8 @@ export default class {
 
     wss: WebSocket.Server;
 
+    devices: Record<string,any> = {}
+
     ergs: Record<string,any> = {}
     
     race: Array<any> = []
@@ -21,10 +23,23 @@ export default class {
                 if (!s[2]) ws.terminate();
                 else {
                     let host = s.slice(2).join('/');
+
+                    this.devices[host] = {
+                        'host': host,
+                        'ip': req.connection.remoteAddress,
+                        'erg_count': undefined,
+                        'last_update': undefined,
+                        'expected_ergs': [],
+                        'ws': ws
+                    } 
+
                     ws.on('message', msg => {
-                        JSON.parse(msg as string).map((data: Record<string,any>) => {
+                        let ergdata: Array<any> = JSON.parse(msg as string)
+                        this.devices[host]["expected_ergs"].forEach((e:string) => {this.ergs[e]['alive'] = false;});
+                        ergdata.map((data: Record<string,any>) => {
                             data['hostname'] = host;
                             data['timestamp'] = Date.now();
+                            data['alive'] = true;
                             if (!this.race.some(r => r['serial'] === data['serial'])) {
                                 this.race.push({
                                     'serial': data['serial'],
@@ -33,7 +48,20 @@ export default class {
                                 });
                             }
                             this.ergs[data['serial']] = data
-                            this.output_is_current = false;
+                        })
+                        this.devices[host]["expected_ergs"] = ergdata.map(d => d["serial"]);
+                        this.output_is_current = false;
+
+                        if (!Object.keys(this.devices).includes(host)) return;
+                        this.devices[host]['erg_count'] = ergdata.length;
+                        this.devices[host]['last_update'] = Date.now();
+
+                    });
+
+                    ws.on("close", () => {
+                        console.log('closing... handling', this.devices[host]['expected_ergs'])
+                        this.devices[host]['expected_ergs'].forEach((e:string) => {
+                            if (Object.keys(this.ergs).includes(e)) this.ergs[e]['alive'] = false;
                         })
                     });
                 }
@@ -45,10 +73,23 @@ export default class {
                     ws.close();
                     return;
                 }
-                ws.send("hello");
+                let id = setInterval(() => {
+                    ws.send(JSON.stringify({
+                        'devices': Object.values(this.devices).map(d => ({
+                            'host': d['host'],
+                            'ip': d['ip'],
+                            'erg_count': d['erg_count'],
+                            'last_update': d['last_update'],
+                            'alive': d['ws'].readyState !== WebSocket.CLOSED
+                        })),
+                        'ergs': Object.values(this.ergs)
+                    }));
+                    if (ws.readyState === WebSocket.CLOSED) clearInterval(id);
+                }, 1000)
             } else {
-                setInterval(() => {
+                let id = setInterval(() => {
                     ws.send(JSON.stringify(this.get_output()));
+                    if (ws.readyState === WebSocket.CLOSED) clearInterval(id);
                 }, 1000)
             }
         });
@@ -79,5 +120,12 @@ export default class {
             });
         }
         return this.output;
+    }
+
+    delete_device(device: string) {
+        if (Object.keys(this.devices).includes(device)) {
+            this.devices[device]["ws"].on("close", () => {delete this.devices[device]});
+            this.devices[device]["ws"].close();
+        }
     }
 }
