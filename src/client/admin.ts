@@ -25,6 +25,7 @@ wss.onmessage = e => {
         row.insertCell().innerHTML = device["ip"]
         row.insertCell().innerHTML = device["erg_count"]
         row.insertCell().innerHTML = `${Math.round((now - device["last_update"])/100)/10}s`
+        
         let buttons = row.insertCell()
         let closeConnectionButton = document.createElement("button")
         closeConnectionButton.className = "btn btn-outline-danger btn-sm py-0"
@@ -54,5 +55,7 @@ wss.onmessage = e => {
         let row = ergRows.insertRow();
         if (!erg['alive']) row.className = "table-warning";
         row.insertCell().innerHTML = erg['serial'];
+
+
     })
 }
